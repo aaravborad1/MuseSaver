@@ -60,7 +60,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if fake, let model = self?.model {
                     Task { await model.debugLoadSynthetic() }
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                let delay = Double(ProcessInfo.processInfo.environment["MUSESAVER_DEBUG_SNAPSHOT_DELAY"] ?? "") ?? 5
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                     self?.windowController.snapshot(to: snapshotPath)
                     exit(0)
                 }

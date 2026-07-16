@@ -7,6 +7,12 @@ artist, and smoothly scrolling, time-synced lyrics.
 
 Built entirely with **Swift, AppKit, and SwiftUI** — no third-party dependencies.
 
+![MuseSaver lock screen with synced lyrics](docs/lockscreen-lyrics.png)
+
+*Tap the album art to declutter — the clock grows to fill the artwork's height:*
+
+![MuseSaver decluttered mode](docs/lockscreen-declutter.png)
+
 ---
 
 ## Features
