@@ -5,15 +5,12 @@ final class MenuBarController: NSObject {
     private let statusItem: NSStatusItem
     private let auth: SpotifyAuth
     private let windowController: LockScreenWindowController
-    private let led: LEDController
 
-    init(auth: SpotifyAuth, windowController: LockScreenWindowController, led: LEDController) {
+    init(auth: SpotifyAuth, windowController: LockScreenWindowController) {
         self.auth = auth
         self.windowController = windowController
-        self.led = led
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
-        led.onStateChange = { [weak self] in self?.rebuildMenu() }
 
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "moon.stars.fill",
@@ -59,21 +56,6 @@ final class MenuBarController: NSObject {
         unlockToggle.state = Preferences.showOnUnlock ? .on : .off
         menu.addItem(unlockToggle)
 
-        let ledTitle: String
-        if !Preferences.syncLEDs {
-            ledTitle = "Sync LEDs to Album Color"
-        } else if led.isConnected {
-            ledTitle = "Sync LEDs to Album Color (connected)"
-        } else {
-            ledTitle = "Sync LEDs to Album Color (searching…)"
-        }
-        let ledToggle = NSMenuItem(title: ledTitle,
-                                   action: #selector(toggleLEDSync),
-                                   keyEquivalent: "")
-        ledToggle.target = self
-        ledToggle.state = Preferences.syncLEDs ? .on : .off
-        menu.addItem(ledToggle)
-
         if auth.isConnected {
             let disconnect = NSMenuItem(title: "Disconnect Spotify",
                                         action: #selector(disconnectSpotify),
@@ -108,12 +90,6 @@ final class MenuBarController: NSObject {
 
     @objc private func toggleShowOnUnlock() {
         Preferences.showOnUnlock.toggle()
-        rebuildMenu()
-    }
-
-    @objc private func toggleLEDSync() {
-        Preferences.syncLEDs.toggle()
-        Preferences.syncLEDs ? led.enable() : led.disable()
         rebuildMenu()
     }
 

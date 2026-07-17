@@ -22,8 +22,6 @@
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
-    <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>MuseSaver syncs your LED strip's color to the album artwork of the current song.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 </dict>

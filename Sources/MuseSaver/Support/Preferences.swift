@@ -13,12 +13,4 @@ enum Preferences {
         }
         set { UserDefaults.standard.set(newValue, forKey: showOnUnlockKey) }
     }
-
-    private static let syncLEDsKey = "syncLEDs"
-
-    /// Whether to sync BLE LED strips to the album color. Defaults to false.
-    static var syncLEDs: Bool {
-        get { UserDefaults.standard.bool(forKey: syncLEDsKey) }
-        set { UserDefaults.standard.set(newValue, forKey: syncLEDsKey) }
-    }
 }
