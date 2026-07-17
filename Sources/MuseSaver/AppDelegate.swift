@@ -8,16 +8,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBar: MenuBarController!
     private var hotKey: HotKeyManager!
     private var unlockObserver: UnlockObserver!
+    private var led: LEDController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let auth = SpotifyAuth()
         let model = NowPlayingModel(auth: auth)
         let windowController = LockScreenWindowController(model: model)
+        let led = LEDController()
 
         self.auth = auth
         self.model = model
         self.windowController = windowController
-        self.menuBar = MenuBarController(auth: auth, windowController: windowController)
+        self.led = led
+        self.menuBar = MenuBarController(auth: auth, windowController: windowController, led: led)
+
+        // LED sync: push each song's extracted album color to the strip.
+        model.onTintChange = { [weak led] color in
+            led?.setColor(color)
+        }
+        if Preferences.syncLEDs {
+            led.enable()
+        }
+
+        // Debug: MUSESAVER_DEBUG_LED=1 forces LED scanning on (with discovery
+        // logging); optionally MUSESAVER_DEBUG_LED_COLOR=ff2200 sends a test
+        // color 8s after launch so the strip visibly reacts.
+        if ProcessInfo.processInfo.environment["MUSESAVER_DEBUG_LED"] == "1" {
+            led.enable()
+            if let hex = ProcessInfo.processInfo.environment["MUSESAVER_DEBUG_LED_COLOR"],
+               let value = UInt32(hex, radix: 16) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak led] in
+                    led?.setColor(NSColor(red: CGFloat((value >> 16) & 0xFF) / 255,
+                                          green: CGFloat((value >> 8) & 0xFF) / 255,
+                                          blue: CGFloat(value & 0xFF) / 255,
+                                          alpha: 1))
+                }
+            }
+        }
 
         // Global hotkey ⌥⌘L toggles the lock screen from anywhere.
         let hotKey = HotKeyManager()

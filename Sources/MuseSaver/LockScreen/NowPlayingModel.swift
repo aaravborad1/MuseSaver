@@ -12,6 +12,15 @@ final class NowPlayingModel: ObservableObject {
     @Published private(set) var isPlaying = false
     @Published private(set) var artwork: NSImage?
     @Published private(set) var artworkColor: Color?
+
+    /// Raw NSColor of the artwork tint; forwarded to onTintChange (LED sync).
+    private(set) var artworkNSColor: NSColor? {
+        didSet {
+            artworkColor = artworkNSColor.map { Color(nsColor: $0) }
+            if let color = artworkNSColor { onTintChange?(color) }
+        }
+    }
+    var onTintChange: ((NSColor) -> Void)?
     @Published private(set) var lyrics: [LyricLine] = []
     @Published private(set) var isConnected: Bool
     @Published private(set) var shuffleOn = false
@@ -27,7 +36,7 @@ final class NowPlayingModel: ObservableObject {
     private var progressAnchor = Date()
 
     /// Artwork + derived color cached per track so revisits render instantly.
-    private var artworkCache: [String: (image: NSImage, color: Color?)] = [:]
+    private var artworkCache: [String: (image: NSImage, color: NSColor?)] = [:]
 
     init(auth: SpotifyAuth) {
         self.auth = auth
@@ -93,7 +102,7 @@ final class NowPlayingModel: ObservableObject {
                 lyrics = []
                 if let cached = artworkCache[key] {
                     artwork = cached.image
-                    artworkColor = cached.color
+                    artworkNSColor = cached.color
                 }
                 await loadDetails(for: track, key: key)
                 // Warm the caches for what's coming next so the transition to the
@@ -122,7 +131,7 @@ final class NowPlayingModel: ObservableObject {
         // Show the artwork as soon as it's available — don't wait on lyrics.
         if key == currentTrackKey, let cached = artworkCache[key] {
             artwork = cached.image
-            artworkColor = cached.color
+            artworkNSColor = cached.color
         }
 
         let loadedLyrics = await lyricLines
@@ -140,7 +149,7 @@ final class NowPlayingModel: ObservableObject {
 
     /// Derives a rich, legible background tone from the artwork's average color,
     /// boosting saturation and clamping brightness so it never reads as muddy black.
-    private static func backgroundColor(from image: NSImage) -> Color? {
+    private static func backgroundColor(from image: NSImage) -> NSColor? {
         guard let tiff = image.tiffRepresentation,
               let ciImage = CIImage(data: tiff) else { return nil }
 
@@ -164,7 +173,7 @@ final class NowPlayingModel: ObservableObject {
                            green: CGFloat(pixel[1]) / 255,
                            blue: CGFloat(pixel[2]) / 255,
                            alpha: 1)
-        guard let hsb = base.usingColorSpace(.deviceRGB) else { return Color(nsColor: base) }
+        guard let hsb = base.usingColorSpace(.deviceRGB) else { return base }
 
         var hue: CGFloat = 0, sat: CGFloat = 0, bri: CGFloat = 0, alpha: CGFloat = 0
         hsb.getHue(&hue, saturation: &sat, brightness: &bri, alpha: &alpha)
@@ -172,7 +181,7 @@ final class NowPlayingModel: ObservableObject {
                               saturation: min(sat * 1.4, 1.0),
                               brightness: max(min(bri * 1.15, 0.72), 0.4),
                               alpha: 1)
-        return Color(nsColor: boosted)
+        return boosted
     }
 
     /// Prefetches lyrics + artwork (+ derived color) for the next couple of queue
