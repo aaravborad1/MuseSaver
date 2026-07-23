@@ -1,0 +1,283 @@
+<Window x:Class="MuseSaverWin.LockScreen.LockScreenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal"
+        Title="MuseSaver" WindowStyle="None" ResizeMode="NoResize"
+        ShowInTaskbar="False" Topmost="True" Background="Black"
+        WindowStartupLocation="Manual" TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <Window.Resources>
+        <Style x:Key="TransportButtonStyle" TargetType="Button">
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+            <Setter Property="Foreground" Value="#E6FFFFFF"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Dynamic-glass clock numerals: layered tinted glow + gradient fill + top highlight,
+             mirroring the SwiftUI clockView's layered ZStack from the macOS original. -->
+        <Style x:Key="ClockGlowStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Opacity" Value="0.55"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <BlurEffect Radius="42" KernelType="Gaussian" RenderingBias="Quality"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ClockMainStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Opacity" Value="0.94"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="Black" Opacity="0.35" BlurRadius="14" ShadowDepth="5" Direction="270"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ClockHighlightStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Opacity" Value="0.5"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid">
+
+        <!-- Background layer: tint gradient + heavily blurred artwork + vignette -->
+        <Grid>
+            <Rectangle x:Name="TintRectangle">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop x:Name="TintStop1" Offset="0" Color="#1F1F1F"/>
+                        <GradientStop x:Name="TintStop2" Offset="0.6" Color="#1A1A1A"/>
+                        <GradientStop Offset="1" Color="#8C000000"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+
+            <Image x:Name="BlurredArtwork" Stretch="UniformToFill" Opacity="0.5"
+                   RenderOptions.BitmapScalingMode="HighQuality" RenderOptions.EdgeMode="Unspecified">
+                <Image.Effect>
+                    <BlurEffect x:Name="BackgroundBlur" Radius="110" KernelType="Gaussian" RenderingBias="Quality"/>
+                </Image.Effect>
+            </Image>
+            <Rectangle Fill="#26000000"/>
+
+            <Rectangle>
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#59000000"/>
+                        <GradientStop Offset="0.5" Color="#00000000"/>
+                        <GradientStop Offset="1" Color="#73000000"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+        </Grid>
+
+        <!-- Click anywhere on background to dismiss -->
+        <Rectangle Fill="Transparent" MouseLeftButtonUp="Background_MouseLeftButtonUp"/>
+
+        <!-- Foreground content -->
+        <Grid Margin="90,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top clock (hidden while decluttered) -->
+            <StackPanel x:Name="TopClockPanel" Grid.Row="0" HorizontalAlignment="Center"
+                        Margin="0,72,0,0" IsHitTestVisible="False">
+                <TextBlock x:Name="TopDateText" FontFamily="Segoe UI Semibold" FontSize="24"
+                           Foreground="#D9FFFFFF" HorizontalAlignment="Center"/>
+                <Grid Margin="0,6,0,0">
+                    <TextBlock x:Name="TopTimeGlow" Style="{StaticResource ClockGlowStyle}"
+                               FontSize="94" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TopTimeText" Style="{StaticResource ClockMainStyle}"
+                               FontSize="94" HorizontalAlignment="Center">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Offset="0" Color="#FCFFFFFF"/>
+                                <GradientStop x:Name="TopTimeTintStop" Offset="0.55" Color="#D9FFFFFF"/>
+                                <GradientStop Offset="1" Color="#8CFFFFFF"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <TextBlock x:Name="TopTimeHighlight" Style="{StaticResource ClockHighlightStyle}"
+                               FontSize="94" HorizontalAlignment="Center">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Offset="0" Color="#D9FFFFFF"/>
+                                <GradientStop Offset="0.55" Color="#00FFFFFF"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                </Grid>
+            </StackPanel>
+
+            <!-- Center: artwork column + lyrics -->
+            <Grid Grid.Row="1" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="340"/>
+                    <ColumnDefinition Width="64"/>
+                    <ColumnDefinition Width="560"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Artwork + mini player -->
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <!-- A Canvas (not a Grid/StackPanel) so the side clock's huge offset
+                         position never feeds back into this column's own measured width —
+                         that was the actual bug: a Grid propagates an overflowing child's
+                         desired size upward, which threw off this whole column's centering
+                         and pushed everything off-screen the moment the clock became visible. -->
+                    <Canvas Width="300" Height="300">
+                        <Border x:Name="ArtworkBorder" Canvas.Left="0" Canvas.Top="0" Width="300" Height="300"
+                                CornerRadius="18" Background="#14FFFFFF" ClipToBounds="True"
+                                MouseLeftButtonUp="Artwork_MouseLeftButtonUp" Cursor="Hand">
+                            <Border.Effect>
+                                <DropShadowEffect Color="Black" Opacity="0.45" BlurRadius="34" ShadowDepth="6"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Image x:Name="ArtworkImage" Stretch="UniformToFill"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <TextBlock x:Name="ArtworkPlaceholder" Text="&#xEC4F;" FontFamily="Segoe Fluent Icons"
+                                           FontSize="64" Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Declutter-mode big clock beside the artwork: date aligned with the
+                             artwork's top edge, time stacked directly below with a fixed gap —
+                             no fixed-height box to squeeze into, so it scales cleanly to
+                             whatever font size the screen-size-based clock scale picks. -->
+                        <StackPanel x:Name="SideClockPanel" Canvas.Left="356" Canvas.Top="0" Orientation="Vertical"
+                                    Width="900" Visibility="Collapsed" IsHitTestVisible="False">
+                            <TextBlock x:Name="SideDateText" FontFamily="Segoe UI Semibold" FontSize="30"
+                                       Foreground="#D9FFFFFF"/>
+                            <Grid Margin="0,8,0,0">
+                                <TextBlock x:Name="SideTimeGlow" Style="{StaticResource ClockGlowStyle}" FontSize="150"/>
+                                <TextBlock x:Name="SideTimeText" Style="{StaticResource ClockMainStyle}" FontSize="150">
+                                    <TextBlock.Foreground>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Offset="0" Color="#FCFFFFFF"/>
+                                            <GradientStop x:Name="SideTimeTintStop" Offset="0.55" Color="#D9FFFFFF"/>
+                                            <GradientStop Offset="1" Color="#8CFFFFFF"/>
+                                        </LinearGradientBrush>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                                <TextBlock x:Name="SideTimeHighlight" Style="{StaticResource ClockHighlightStyle}" FontSize="150">
+                                    <TextBlock.Foreground>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Offset="0" Color="#D9FFFFFF"/>
+                                            <GradientStop Offset="0.55" Color="#00FFFFFF"/>
+                                        </LinearGradientBrush>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                            </Grid>
+                        </StackPanel>
+                    </Canvas>
+
+                    <Border x:Name="MiniPlayer" Margin="0,22,0,0" Width="340" CornerRadius="22"
+                            Background="#33FFFFFF" BorderBrush="#1FFFFFFF" BorderThickness="1" Padding="18">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="44"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8" ClipToBounds="True"
+                                        Background="#1AFFFFFF">
+                                    <Image x:Name="ThumbnailImage" Stretch="UniformToFill"
+                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Border>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock x:Name="TrackTitleText" FontSize="16" FontWeight="Bold"
+                                               Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="TrackArtistText" FontSize="14" FontWeight="Medium"
+                                               Foreground="#B3FFFFFF" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid x:Name="ProgressTrack" Height="18" Margin="0,14,0,0"
+                                  Background="Transparent" MouseLeftButtonDown="ProgressTrack_MouseLeftButtonDown">
+                                <Rectangle Height="5" Fill="#38FFFFFF" RadiusX="2.5" RadiusY="2.5"
+                                           VerticalAlignment="Center"/>
+                                <Rectangle x:Name="ProgressFill" Height="5" Fill="#D9FFFFFF" RadiusX="2.5" RadiusY="2.5"
+                                           HorizontalAlignment="Left" VerticalAlignment="Center" Width="0"/>
+                            </Grid>
+
+                            <Grid Margin="0,16,0,0">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button x:Name="ShuffleButton" Style="{StaticResource TransportButtonStyle}"
+                                            FontSize="15" Content="&#xE8B1;" Click="ShuffleButton_Click"/>
+                                    <Button x:Name="PrevButton" Style="{StaticResource TransportButtonStyle}"
+                                            FontSize="20" Content="&#xE892;" Click="PrevButton_Click" Margin="26,0,0,0"/>
+                                    <Button x:Name="PlayPauseButton" Style="{StaticResource TransportButtonStyle}"
+                                            FontSize="24" Content="&#xE768;" Click="PlayPauseButton_Click" Margin="26,0,0,0"/>
+                                    <Button x:Name="NextButton" Style="{StaticResource TransportButtonStyle}"
+                                            FontSize="20" Content="&#xE893;" Click="NextButton_Click" Margin="26,0,0,0"/>
+                                    <Button x:Name="RepeatButton" Style="{StaticResource TransportButtonStyle}"
+                                            FontSize="15" Content="&#xE8EE;" Click="RepeatButton_Click" Margin="26,0,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Lyrics: a small centered window of lines (2 before, current, 2 after)
+                     rebuilt directly from the model each time the current line changes —
+                     no scroll-offset math, so there's nothing fragile to mis-measure.
+                     Fixed Width (not MaxWidth) keeps the wrap constraint unambiguous even
+                     though the container is left-aligned within its column. -->
+                <Border Grid.Column="2" x:Name="LyricsContainer" Width="560" Height="360"
+                        HorizontalAlignment="Left" VerticalAlignment="Center" ClipToBounds="True">
+                    <Border.OpacityMask>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Offset="0" Color="#00000000"/>
+                            <GradientStop Offset="0.1" Color="#FF000000"/>
+                            <GradientStop Offset="0.9" Color="#FF000000"/>
+                            <GradientStop Offset="1" Color="#00000000"/>
+                        </LinearGradientBrush>
+                    </Border.OpacityMask>
+                    <StackPanel x:Name="LyricsPanel" Width="560" VerticalAlignment="Center"
+                                IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                        <StackPanel.RenderTransform>
+                            <TranslateTransform x:Name="LyricsPanelTransform"/>
+                        </StackPanel.RenderTransform>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock x:Name="NothingPlayingText" Grid.Column="0" Grid.ColumnSpan="3"
+                           Text="Nothing playing" FontSize="22" FontWeight="Medium"
+                           Foreground="#8CFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           IsHitTestVisible="False" Visibility="Collapsed"/>
+            </Grid>
+
+            <Grid Grid.Row="2" Height="36"/>
+        </Grid>
+    </Grid>
+</Window>

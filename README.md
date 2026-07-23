@@ -1,5 +1,8 @@
 # MuseSaver
 
+> This is the **macOS** version (Swift/AppKit/SwiftUI). A native **Windows** version
+> (C#/WPF) lives in [`Windows/`](Windows/README.md).
+
 A free, open-source macOS clone of the *MuseSaver* lock screen app. MuseSaver lives in
 your menu bar and shows a fullscreen, iOS-style lock screen for whatever is
 currently playing on Spotify: blurred album art, a big clock, the track title and
