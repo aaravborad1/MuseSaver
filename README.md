@@ -1,7 +1,16 @@
 # MuseSaver
 
-> This is the **macOS** version (Swift/AppKit/SwiftUI). A native **Windows** version
-> (C#/WPF) lives in [`Windows/`](Windows/README.md).
+**This repo has two versions.** Pick the one for your OS:
+
+| Platform | Where | Stack |
+|---|---|---|
+| **macOS** | This README (repo root) | Swift, AppKit, SwiftUI |
+| **Windows** | [`Windows/`](Windows/README.md) | C#, WPF (.NET 8) |
+
+Everything below this point is the **macOS** setup guide. For Windows, stop here and
+go to [`Windows/README.md`](Windows/README.md) instead — the steps differ (different
+build tooling, credential storage, hotkeys, etc.), so the two aren't interchangeable
+past step 1.
 
 A free, open-source macOS clone of the *MuseSaver* lock screen app. MuseSaver lives in
 your menu bar and shows a fullscreen, iOS-style lock screen for whatever is
@@ -42,6 +51,9 @@ Built entirely with **Swift, AppKit, and SwiftUI** — no third-party dependenci
 
 ## 1. Register a Spotify app
 
+*(This step is identical on both macOS and Windows — the redirect URI and PKCE flow
+are the same either way.)*
+
 1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
    and click **Create app**.
 2. Give it any name and description.
@@ -73,7 +85,9 @@ export SPOTIFY_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxx
 
 ---
 
-## 2. Build & run
+## 2. Build & run (macOS)
+
+*(On Windows, this step is different — see [`Windows/README.md`](Windows/README.md#2-build--run) instead.)*
 
 ### From the command line
 
